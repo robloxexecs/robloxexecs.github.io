@@ -1,0 +1,42 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GitHub Download Test</title>
+  <hta:application
+    id="app"
+    applicationname="GitHub Download Test"
+    border="thin"
+    caption="yes"
+    showintaskbar="yes"
+    singleinstance="yes"
+  />
+</head>
+<body style="font-family: Segoe UI, sans-serif; padding: 20px;">
+  <h3>GitHub file test</h3>
+  <p id="status">Requesting file...</p>
+
+  <script language="JScript">
+    var url =
+      "https://raw.githubusercontent.com/USERNAME/hello-popup-test/main/hello.pyw";
+
+    try {
+      var request = new ActiveXObject("MSXML2.XMLHTTP");
+      request.open("GET", url, false);
+      request.send();
+
+      if (request.status === 200) {
+        document.getElementById("status").innerText =
+          "Success: GitHub returned the file (" +
+          request.responseText.length + " characters).";
+      } else {
+        document.getElementById("status").innerText =
+          "HTTP error: " + request.status;
+      }
+    } catch (e) {
+      document.getElementById("status").innerText =
+        "Request failed: " + e.message;
+    }
+  </script>
+</body>
+</html>
